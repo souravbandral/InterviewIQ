@@ -1,34 +1,71 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Signup() {
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
+    if (!name.trim() || !email.trim() || !password) {
+      alert("Please fill all fields.");
+      return;
+    }
 
-    const response = await fetch("http://127.0.0.1:8000/signup", {
+    try {
+      setLoading(true);
 
-      method: "POST",
+      const normalizedName = name.trim();
+      const normalizedEmail = email.trim().toLowerCase();
 
-      headers: {
-        "Content-Type": "application/json",
-      },
+      const response = await fetch(
+        "https://interviewiq-backend.vercel.app/signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: normalizedName,
+            email: normalizedEmail,
+            password,
+          }),
+        }
+      );
 
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-      }),
+      const data = await response.json();
 
-    });
+      alert(data.message);
 
-    const data = await response.json();
+      if (data.success) {
+        /*
+          Save the name entered during signup.
+          Login.jsx will use this to show the real name
+          instead of the email username.
+        */
 
-    console.log(data);
+        localStorage.setItem(
+          "signupName",
+          normalizedName
+        );
 
+        localStorage.setItem(
+          "signupEmail",
+          normalizedEmail
+        );
+
+        navigate("/login");
+      }
+    } catch (error) {
+      console.log("SIGNUP ERROR:", error);
+
+      alert("Unable to connect to server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,7 +81,8 @@ function Signup() {
           Start your AI interview preparation journey
         </p>
 
-        {/* Name */}
+        {/* NAME */}
+
         <div className="mt-8">
 
           <label className="text-gray-300">
@@ -52,41 +90,72 @@ function Signup() {
           </label>
 
           <input
-  type="text"
-  placeholder="Enter your name"
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
-/>
+            type="text"
+            placeholder="Enter your name"
+            value={name}
+            onChange={(e) =>
+              setName(e.target.value)
+            }
+            className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+          />
 
         </div>
 
-        {/* Email */}
-        <input
-  type="email"
-  placeholder="Enter your email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
-/>
+        {/* EMAIL */}
 
-        {/* Password */}
-        <input
-  type="password"
-  placeholder="Create password"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
-/>
+        <div className="mt-5">
 
-        {/* Signup Button */}
-        
+          <label className="text-gray-300">
+            Email
+          </label>
+
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+          />
+
+        </div>
+
+        {/* PASSWORD */}
+
+        <div className="mt-5">
+
+          <label className="text-gray-300">
+            Password
+          </label>
+
+          <input
+            type="password"
+            placeholder="Create password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+            className="w-full mt-2 p-4 rounded-xl bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500"
+          />
+
+        </div>
+
+        {/* SIGNUP BUTTON */}
+
         <button
-  onClick={handleSignup}
-  className="w-full mt-8 bg-blue-600 hover:bg-blue-700 transition p-4 rounded-xl text-lg font-semibold text-white"
->
-  Create Account
-</button>
+          onClick={handleSignup}
+          disabled={loading}
+          className={`w-full mt-8 transition p-4 rounded-xl text-lg font-semibold text-white ${
+            loading
+              ? "bg-gray-700 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {loading
+            ? "Creating Account..."
+            : "Create Account"}
+        </button>
 
       </div>
 
